@@ -1,402 +1,368 @@
-{
- "cells": [
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "1a509936",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "from flask import Flask, request, render_template\n",
-    "from flask_cors import cross_origin\n",
-    "import sklearn\n",
-    "import pickle\n",
-    "import pandas as pd\n",
-    "\n",
-    "app = Flask(__name__)\n",
-    "model = pickle.load(open(\"flight_rf.pkl\", \"rb\"))\n",
-    "\n",
-    "\n",
-    "\n",
-    "@app.route(\"/\")\n",
-    "@cross_origin()\n",
-    "def home():\n",
-    "    return render_template(\"home.html\")\n",
-    "\n",
-    "\n",
-    "\n",
-    "\n",
-    "@app.route(\"/predict\", methods = [\"GET\", \"POST\"])\n",
-    "@cross_origin()\n",
-    "def predict():\n",
-    "    if request.method == \"POST\":\n",
-    "\n",
-    "        # Date_of_Journey\n",
-    "        date_dep = request.form[\"Dep_Time\"]\n",
-    "        Journey_day = int(pd.to_datetime(date_dep, format=\"%Y-%m-%dT%H:%M\").day)\n",
-    "        Journey_month = int(pd.to_datetime(date_dep, format =\"%Y-%m-%dT%H:%M\").month)\n",
-    "        # print(\"Journey Date : \",Journey_day, Journey_month)\n",
-    "\n",
-    "        # Departure\n",
-    "        Dep_hour = int(pd.to_datetime(date_dep, format =\"%Y-%m-%dT%H:%M\").hour)\n",
-    "        Dep_min = int(pd.to_datetime(date_dep, format =\"%Y-%m-%dT%H:%M\").minute)\n",
-    "        # print(\"Departure : \",Dep_hour, Dep_min)\n",
-    "\n",
-    "        # Arrival\n",
-    "        date_arr = request.form[\"Arrival_Time\"]\n",
-    "        Arrival_hour = int(pd.to_datetime(date_arr, format =\"%Y-%m-%dT%H:%M\").hour)\n",
-    "        Arrival_min = int(pd.to_datetime(date_arr, format =\"%Y-%m-%dT%H:%M\").minute)\n",
-    "        # print(\"Arrival : \", Arrival_hour, Arrival_min)\n",
-    "\n",
-    "        # Duration\n",
-    "        dur_hour = abs(Arrival_hour - Dep_hour)\n",
-    "        dur_min = abs(Arrival_min - Dep_min)\n",
-    "        # print(\"Duration : \", dur_hour, dur_min)\n",
-    "\n",
-    "        # Total Stops\n",
-    "        Total_stops = int(request.form[\"stops\"])\n",
-    "        # print(Total_stops)\n",
-    "\n",
-    "        # Airline\n",
-    "        # AIR ASIA = 0 (not in column)\n",
-    "        airline=request.form['airline']\n",
-    "        if(airline=='Jet Airways'):\n",
-    "            Jet_Airways = 1\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0 \n",
-    "\n",
-    "        elif (airline=='IndiGo'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 1\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0 \n",
-    "\n",
-    "        elif (airline=='Air India'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 1\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0 \n",
-    "            \n",
-    "        elif (airline=='Multiple carriers'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 1\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0 \n",
-    "            \n",
-    "        elif (airline=='SpiceJet'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 1\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0 \n",
-    "            \n",
-    "        elif (airline=='Vistara'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 1\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0\n",
-    "\n",
-    "        elif (airline=='GoAir'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 1\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0\n",
-    "\n",
-    "        elif (airline=='Multiple carriers Premium economy'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 1\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0\n",
-    "\n",
-    "        elif (airline=='Jet Airways Business'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 1\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0\n",
-    "\n",
-    "        elif (airline=='Vistara Premium economy'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 1\n",
-    "            Trujet = 0\n",
-    "            \n",
-    "        elif (airline=='Trujet'):\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 1\n",
-    "\n",
-    "        else:\n",
-    "            Jet_Airways = 0\n",
-    "            IndiGo = 0\n",
-    "            Air_India = 0\n",
-    "            Multiple_carriers = 0\n",
-    "            SpiceJet = 0\n",
-    "            Vistara = 0\n",
-    "            GoAir = 0\n",
-    "            Multiple_carriers_Premium_economy = 0\n",
-    "            Jet_Airways_Business = 0\n",
-    "            Vistara_Premium_economy = 0\n",
-    "            Trujet = 0\n",
-    "\n",
-    "        # print(Jet_Airways,\n",
-    "        #     IndiGo,\n",
-    "        #     Air_India,\n",
-    "        #     Multiple_carriers,\n",
-    "        #     SpiceJet,\n",
-    "        #     Vistara,\n",
-    "        #     GoAir,\n",
-    "        #     Multiple_carriers_Premium_economy,\n",
-    "        #     Jet_Airways_Business,\n",
-    "        #     Vistara_Premium_economy,\n",
-    "        #     Trujet)\n",
-    "\n",
-    "        # Source\n",
-    "        # Banglore = 0 (not in column)\n",
-    "        Source = request.form[\"Source\"]\n",
-    "        if (Source == 'Delhi'):\n",
-    "            s_Delhi = 1\n",
-    "            s_Kolkata = 0\n",
-    "            s_Mumbai = 0\n",
-    "            s_Chennai = 0\n",
-    "\n",
-    "        elif (Source == 'Kolkata'):\n",
-    "            s_Delhi = 0\n",
-    "            s_Kolkata = 1\n",
-    "            s_Mumbai = 0\n",
-    "            s_Chennai = 0\n",
-    "\n",
-    "        elif (Source == 'Mumbai'):\n",
-    "            s_Delhi = 0\n",
-    "            s_Kolkata = 0\n",
-    "            s_Mumbai = 1\n",
-    "            s_Chennai = 0\n",
-    "\n",
-    "        elif (Source == 'Chennai'):\n",
-    "            s_Delhi = 0\n",
-    "            s_Kolkata = 0\n",
-    "            s_Mumbai = 0\n",
-    "            s_Chennai = 1\n",
-    "\n",
-    "        else:\n",
-    "            s_Delhi = 0\n",
-    "            s_Kolkata = 0\n",
-    "            s_Mumbai = 0\n",
-    "            s_Chennai = 0\n",
-    "\n",
-    "        # print(s_Delhi,\n",
-    "        #     s_Kolkata,\n",
-    "        #     s_Mumbai,\n",
-    "        #     s_Chennai)\n",
-    "\n",
-    "        # Destination\n",
-    "        # Banglore = 0 (not in column)\n",
-    "        Source = request.form[\"Destination\"]\n",
-    "        if (Source == 'Cochin'):\n",
-    "            d_Cochin = 1\n",
-    "            d_Delhi = 0\n",
-    "            d_New_Delhi = 0\n",
-    "            d_Hyderabad = 0\n",
-    "            d_Kolkata = 0\n",
-    "        \n",
-    "        elif (Source == 'Delhi'):\n",
-    "            d_Cochin = 0\n",
-    "            d_Delhi = 1\n",
-    "            d_New_Delhi = 0\n",
-    "            d_Hyderabad = 0\n",
-    "            d_Kolkata = 0\n",
-    "\n",
-    "        elif (Source == 'New_Delhi'):\n",
-    "            d_Cochin = 0\n",
-    "            d_Delhi = 0\n",
-    "            d_New_Delhi = 1\n",
-    "            d_Hyderabad = 0\n",
-    "            d_Kolkata = 0\n",
-    "\n",
-    "        elif (Source == 'Hyderabad'):\n",
-    "            d_Cochin = 0\n",
-    "            d_Delhi = 0\n",
-    "            d_New_Delhi = 0\n",
-    "            d_Hyderabad = 1\n",
-    "            d_Kolkata = 0\n",
-    "\n",
-    "        elif (Source == 'Kolkata'):\n",
-    "            d_Cochin = 0\n",
-    "            d_Delhi = 0\n",
-    "            d_New_Delhi = 0\n",
-    "            d_Hyderabad = 0\n",
-    "            d_Kolkata = 1\n",
-    "\n",
-    "        else:\n",
-    "            d_Cochin = 0\n",
-    "            d_Delhi = 0\n",
-    "            d_New_Delhi = 0\n",
-    "            d_Hyderabad = 0\n",
-    "            d_Kolkata = 0\n",
-    "\n",
-    "        # print(\n",
-    "        #     d_Cochin,\n",
-    "        #     d_Delhi,\n",
-    "        #     d_New_Delhi,\n",
-    "        #     d_Hyderabad,\n",
-    "        #     d_Kolkata\n",
-    "        # )\n",
-    "        \n",
-    "\n",
-    "    #     ['Total_Stops', 'Journey_day', 'Journey_month', 'Dep_hour',\n",
-    "    #    'Dep_min', 'Arrival_hour', 'Arrival_min', 'Duration_hours',\n",
-    "    #    'Duration_mins', 'Airline_Air India', 'Airline_GoAir', 'Airline_IndiGo',\n",
-    "    #    'Airline_Jet Airways', 'Airline_Jet Airways Business',\n",
-    "    #    'Airline_Multiple carriers',\n",
-    "    #    'Airline_Multiple carriers Premium economy', 'Airline_SpiceJet',\n",
-    "    #    'Airline_Trujet', 'Airline_Vistara', 'Airline_Vistara Premium economy',\n",
-    "    #    'Source_Chennai', 'Source_Delhi', 'Source_Kolkata', 'Source_Mumbai',\n",
-    "    #    'Destination_Cochin', 'Destination_Delhi', 'Destination_Hyderabad',\n",
-    "    #    'Destination_Kolkata', 'Destination_New Delhi']\n",
-    "        \n",
-    "        prediction=model.predict([[\n",
-    "            Total_stops,\n",
-    "            Journey_day,\n",
-    "            Journey_month,\n",
-    "            Dep_hour,\n",
-    "            Dep_min,\n",
-    "            Arrival_hour,\n",
-    "            Arrival_min,\n",
-    "            dur_hour,\n",
-    "            dur_min,\n",
-    "            Air_India,\n",
-    "            GoAir,\n",
-    "            IndiGo,\n",
-    "            Jet_Airways,\n",
-    "            Jet_Airways_Business,\n",
-    "            Multiple_carriers,\n",
-    "            Multiple_carriers_Premium_economy,\n",
-    "            SpiceJet,\n",
-    "            Trujet,\n",
-    "            Vistara,\n",
-    "            Vistara_Premium_economy,\n",
-    "            s_Chennai,\n",
-    "            s_Delhi,\n",
-    "            s_Kolkata,\n",
-    "            s_Mumbai,\n",
-    "            d_Cochin,\n",
-    "            d_Delhi,\n",
-    "            d_Hyderabad,\n",
-    "            d_Kolkata,\n",
-    "            d_New_Delhi\n",
-    "        ]])\n",
-    "\n",
-    "        output=round(prediction[0],2)\n",
-    "\n",
-    "        return render_template('home.html',prediction_text=\"Your Flight price is Rs. {}\".format(output))\n",
-    "\n",
-    "\n",
-    "    return render_template(\"home.html\")\n",
-    "\n",
-    "\n",
-    "\n",
-    "\n",
-    "if __name__ == \"__main__\":\n",
-    "    app.run(debug=True)"
-   ]
-  }
- ],
- "metadata": {
-  "kernelspec": {
-   "display_name": "Python 3 (ipykernel)",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 3
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
-   "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython3",
-   "version": "3.9.5"
-  }
- },
- "nbformat": 4,
- "nbformat_minor": 5
-}
+from flask import Flask, request, render_template
+from flask_cors import cross_origin
+import sklearn
+import pickle
+import pandas as pd
+
+app = Flask(__name__)
+model = pickle.load(open("flight_rf.pkl", "rb"))
+
+
+
+@app.route("/")
+@cross_origin()
+def home():
+    return render_template("home.html")
+
+
+
+
+@app.route("/predict", methods = ["GET", "POST"])
+@cross_origin()
+def predict():
+    if request.method == "POST":
+
+        # Date_of_Journey
+        date_dep = request.form["Dep_Time"]
+        Journey_day = int(pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M").day)
+        Journey_month = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").month)
+        # print("Journey Date : ",Journey_day, Journey_month)
+
+        # Departure
+        Dep_hour = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").hour)
+        Dep_min = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").minute)
+        # print("Departure : ",Dep_hour, Dep_min)
+
+        # Arrival
+        date_arr = request.form["Arrival_Time"]
+        Arrival_hour = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").hour)
+        Arrival_min = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").minute)
+        # print("Arrival : ", Arrival_hour, Arrival_min)
+
+        # Duration
+        dur_hour = abs(Arrival_hour - Dep_hour)
+        dur_min = abs(Arrival_min - Dep_min)
+        # print("Duration : ", dur_hour, dur_min)
+
+        # Total Stops
+        Total_stops = int(request.form["stops"])
+        # print(Total_stops)
+
+        # Airline
+        # AIR ASIA = 0 (not in column)
+        airline=request.form['airline']
+        if(airline=='Jet Airways'):
+            Jet_Airways = 1
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0 
+
+        elif (airline=='IndiGo'):
+            Jet_Airways = 0
+            IndiGo = 1
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0 
+
+        elif (airline=='Air India'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 1
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0 
+            
+        elif (airline=='Multiple carriers'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 1
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0 
+            
+        elif (airline=='SpiceJet'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 1
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0 
+            
+        elif (airline=='Vistara'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 1
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0
+
+        elif (airline=='GoAir'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 1
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0
+
+        elif (airline=='Multiple carriers Premium economy'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 1
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0
+
+        elif (airline=='Jet Airways Business'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 1
+            Vistara_Premium_economy = 0
+            Trujet = 0
+
+        elif (airline=='Vistara Premium economy'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 1
+            Trujet = 0
+            
+        elif (airline=='Trujet'):
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 1
+
+        else:
+            Jet_Airways = 0
+            IndiGo = 0
+            Air_India = 0
+            Multiple_carriers = 0
+            SpiceJet = 0
+            Vistara = 0
+            GoAir = 0
+            Multiple_carriers_Premium_economy = 0
+            Jet_Airways_Business = 0
+            Vistara_Premium_economy = 0
+            Trujet = 0
+
+        # print(Jet_Airways,
+        #     IndiGo,
+        #     Air_India,
+        #     Multiple_carriers,
+        #     SpiceJet,
+        #     Vistara,
+        #     GoAir,
+        #     Multiple_carriers_Premium_economy,
+        #     Jet_Airways_Business,
+        #     Vistara_Premium_economy,
+        #     Trujet)
+
+        # Source
+        # Banglore = 0 (not in column)
+        Source = request.form["Source"]
+        if (Source == 'Delhi'):
+            s_Delhi = 1
+            s_Kolkata = 0
+            s_Mumbai = 0
+            s_Chennai = 0
+
+        elif (Source == 'Kolkata'):
+            s_Delhi = 0
+            s_Kolkata = 1
+            s_Mumbai = 0
+            s_Chennai = 0
+
+        elif (Source == 'Mumbai'):
+            s_Delhi = 0
+            s_Kolkata = 0
+            s_Mumbai = 1
+            s_Chennai = 0
+
+        elif (Source == 'Chennai'):
+            s_Delhi = 0
+            s_Kolkata = 0
+            s_Mumbai = 0
+            s_Chennai = 1
+
+        else:
+            s_Delhi = 0
+            s_Kolkata = 0
+            s_Mumbai = 0
+            s_Chennai = 0
+
+        # print(s_Delhi,
+        #     s_Kolkata,
+        #     s_Mumbai,
+        #     s_Chennai)
+
+        # Destination
+        # Banglore = 0 (not in column)
+        Source = request.form["Destination"]
+        if (Source == 'Cochin'):
+            d_Cochin = 1
+            d_Delhi = 0
+            d_New_Delhi = 0
+            d_Hyderabad = 0
+            d_Kolkata = 0
+        
+        elif (Source == 'Delhi'):
+            d_Cochin = 0
+            d_Delhi = 1
+            d_New_Delhi = 0
+            d_Hyderabad = 0
+            d_Kolkata = 0
+
+        elif (Source == 'New_Delhi'):
+            d_Cochin = 0
+            d_Delhi = 0
+            d_New_Delhi = 1
+            d_Hyderabad = 0
+            d_Kolkata = 0
+
+        elif (Source == 'Hyderabad'):
+            d_Cochin = 0
+            d_Delhi = 0
+            d_New_Delhi = 0
+            d_Hyderabad = 1
+            d_Kolkata = 0
+
+        elif (Source == 'Kolkata'):
+            d_Cochin = 0
+            d_Delhi = 0
+            d_New_Delhi = 0
+            d_Hyderabad = 0
+            d_Kolkata = 1
+
+        else:
+            d_Cochin = 0
+            d_Delhi = 0
+            d_New_Delhi = 0
+            d_Hyderabad = 0
+            d_Kolkata = 0
+
+        # print(
+        #     d_Cochin,
+        #     d_Delhi,
+        #     d_New_Delhi,
+        #     d_Hyderabad,
+        #     d_Kolkata
+        # )
+        
+
+    #     ['Total_Stops', 'Journey_day', 'Journey_month', 'Dep_hour',
+    #    'Dep_min', 'Arrival_hour', 'Arrival_min', 'Duration_hours',
+    #    'Duration_mins', 'Airline_Air India', 'Airline_GoAir', 'Airline_IndiGo',
+    #    'Airline_Jet Airways', 'Airline_Jet Airways Business',
+    #    'Airline_Multiple carriers',
+    #    'Airline_Multiple carriers Premium economy', 'Airline_SpiceJet',
+    #    'Airline_Trujet', 'Airline_Vistara', 'Airline_Vistara Premium economy',
+    #    'Source_Chennai', 'Source_Delhi', 'Source_Kolkata', 'Source_Mumbai',
+    #    'Destination_Cochin', 'Destination_Delhi', 'Destination_Hyderabad',
+    #    'Destination_Kolkata', 'Destination_New Delhi']
+        
+        prediction=model.predict([[
+            Total_stops,
+            Journey_day,
+            Journey_month,
+            Dep_hour,
+            Dep_min,
+            Arrival_hour,
+            Arrival_min,
+            dur_hour,
+            dur_min,
+            Air_India,
+            GoAir,
+            IndiGo,
+            Jet_Airways,
+            Jet_Airways_Business,
+            Multiple_carriers,
+            Multiple_carriers_Premium_economy,
+            SpiceJet,
+            Trujet,
+            Vistara,
+            Vistara_Premium_economy,
+            s_Chennai,
+            s_Delhi,
+            s_Kolkata,
+            s_Mumbai,
+            d_Cochin,
+            d_Delhi,
+            d_Hyderabad,
+            d_Kolkata,
+            d_New_Delhi
+        ]])
+
+        output=round(prediction[0],2)
+
+        return render_template('home.html',prediction_text="Your Flight price is Rs. {}".format(output))
+
+
+    return render_template("home.html")
+
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
